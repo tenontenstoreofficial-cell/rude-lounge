@@ -233,37 +233,82 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// ===== RESERVATION FORM =====
-reservationForm?.addEventListener('submit', function (e) {
-    e.preventDefault();
+// ===== WHATSAPP RESERVATION =====
+// TODO: Replace with your actual WhatsApp business number (with country code, no + or spaces)
+const WHATSAPP_NUMBER = '919876543210'; // e.g., '919876543210' for +91 98765 43210
 
-    const formData = new FormData(this);
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.textContent;
+const whatsappBtn = document.getElementById('whatsapp-btn');
+const datetimeInput = document.getElementById('datetime');
+
+// Set minimum date to now (prevent past bookings)
+function setMinDateTime() {
+    const now = new Date();
+    // Format: YYYY-MM-DDTHH:MM
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+    if (datetimeInput) {
+        datetimeInput.min = minDateTime;
+    }
+}
+
+// Set min date on page load
+setMinDateTime();
+
+whatsappBtn?.addEventListener('click', function () {
+    // Get form values
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const guests = document.getElementById('guests').value;
+    const datetime = document.getElementById('datetime').value;
+    const requests = document.getElementById('requests').value.trim();
 
     // Validate required fields
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const phone = document.getElementById('phone').value;
-    const guests = document.getElementById('guests').value;
-    const date = document.getElementById('date').value;
-    const time = document.getElementById('time').value;
-
-    if (!name || !email || !phone || !guests || !date || !time) {
+    if (!name || !email || !phone || !guests || !datetime) {
         showNotification('Please fill in all required fields.', 'error');
         return;
     }
 
-    // Simulate submission
-    submitBtn.textContent = 'Processing...';
-    submitBtn.disabled = true;
+    // Format date and time for message
+    const dateObj = new Date(datetime);
+    const formattedDate = dateObj.toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    const formattedTime = dateObj.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
 
-    setTimeout(() => {
-        showNotification('Reservation confirmed! We will contact you shortly.', 'success');
-        this.reset();
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    }, 2000);
+    // Create WhatsApp message
+    const message = `🍽️ *New Reservation Request*
+
+*Name:* ${name}
+*Email:* ${email}
+*Phone:* ${phone}
+*Guests:* ${guests}
+*Date:* ${formattedDate}
+*Time:* ${formattedTime}
+*Special Requests:* ${requests || 'None'}
+
+_Sent from Rude Lounge Website_`;
+
+    // Encode message for URL
+    const encodedMessage = encodeURIComponent(message);
+
+    // Open WhatsApp
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+
+    showNotification('Opening WhatsApp...', 'success');
 });
 
 // ===== NOTIFICATION SYSTEM =====
